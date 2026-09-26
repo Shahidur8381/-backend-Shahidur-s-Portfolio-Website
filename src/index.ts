@@ -40,9 +40,14 @@ app.use(
   })
 );
 
+import { UPLOADS_DIR } from "./utils/upload";
+
 // ─── Body parsing ─────────────────────────────────────────────────────────────
-app.use(express.json({ limit: "1mb" }));
-app.use(express.urlencoded({ extended: true }));
+app.use(express.json({ limit: "15mb" }));
+app.use(express.urlencoded({ extended: true, limit: "15mb" }));
+
+// ─── Static files (uploaded images) ───────────────────────────────────────────
+app.use("/uploads", express.static(UPLOADS_DIR));
 
 // ─── Request logging ──────────────────────────────────────────────────────────
 app.use((req, _res, next) => {

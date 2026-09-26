@@ -39,16 +39,20 @@ const TABLE_MAP: Record<string, typeof personal | typeof navLinks | typeof whatI
   testimonials,
 };
 
+import fs from "fs";
+import path from "path";
+import { UPLOADS_DIR } from "../utils/upload";
+
 // ─── Personal ─────────────────────────────────────────────────────────────────
 const PersonalSchema = z.object({
-  name: z.string().optional(),
-  title: z.string().optional(),
-  email: z.string().optional(),
-  salam: z.string().optional(),
-  salamMeaning: z.string().optional(),
+  name: z.string().optional().nullable(),
+  title: z.string().optional().nullable(),
+  email: z.string().optional().nullable(),
+  salam: z.string().optional().nullable(),
+  salamMeaning: z.string().optional().nullable(),
   roles: z.array(z.string()).optional(),
-  aboutIntro: z.string().optional(),
-  portrait: z.string().optional(),
+  aboutIntro: z.string().optional().nullable(),
+  portrait: z.string().optional().nullable(),
 });
 
 router.put("/personal", (req: Request, res: Response) => {
@@ -65,6 +69,52 @@ router.put("/personal", (req: Request, res: Response) => {
   } catch (err) {
     if (err instanceof z.ZodError) return res.status(400).json({ error: err.errors });
     return res.status(500).json({ error: "Failed to update personal info" });
+  }
+});
+
+// ─── Image Upload ─────────────────────────────────────────────────────────────
+const UploadSchema = z.object({
+  image: z.string(), // Base64 data URL or pure base64 string
+  filename: z.string().optional(),
+});
+
+router.post("/upload", (req: Request, res: Response) => {
+  try {
+    const { image, filename } = UploadSchema.parse(req.body);
+    const matches = image.match(/^data:([A-Za-z-+\/]+);base64,(.+)$/);
+    let buffer: Buffer;
+    let ext = "png";
+
+    if (matches && matches.length === 3) {
+      const mime = matches[1].toLowerCase();
+      if (mime.includes("jpeg") || mime.includes("jpg")) ext = "jpg";
+      else if (mime.includes("webp")) ext = "webp";
+      else if (mime.includes("gif")) ext = "gif";
+      else if (mime.includes("svg")) ext = "svg";
+      buffer = Buffer.from(matches[2], "base64");
+    } else {
+      buffer = Buffer.from(image, "base64");
+    }
+
+    const safeName = filename
+      ? filename.replace(/[^a-zA-Z0-9.-]/g, "_")
+      : `image-${Date.now()}.${ext}`;
+    const cleanFilename = `${Date.now()}-${safeName}`;
+    const filePath = path.join(UPLOADS_DIR, cleanFilename);
+    fs.writeFileSync(filePath, buffer);
+
+    const host = req.get("host") || "api.shahidur.dev";
+    const protocol = req.protocol === "https" || req.headers["x-forwarded-proto"] === "https" ? "https" : "http";
+    const url = `${protocol}://${host}/uploads/${cleanFilename}`;
+
+    return res.status(201).json({
+      url,
+      relativeUrl: `/uploads/${cleanFilename}`,
+      filename: cleanFilename,
+    });
+  } catch (err) {
+    if (err instanceof z.ZodError) return res.status(400).json({ error: err.errors });
+    return res.status(500).json({ error: "Failed to upload image" });
   }
 });
 
