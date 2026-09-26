@@ -1,6 +1,7 @@
 import { Router, Request, Response } from "express";
 import { eq } from "drizzle-orm";
 import { z } from "zod";
+import crypto from "crypto";
 import db from "../db/connection";
 import {
   personal,
@@ -10,13 +11,74 @@ import {
   experiences,
   projects,
   testimonials,
+  adminConfig,
+  adminSessions,
 } from "../db/schema";
 import { totpAuth } from "../middleware/auth";
+import { verifyTOTP } from "../utils/totp";
 
 const router = Router();
 
-// Apply TOTP auth to ALL admin routes
+// ─── Login Endpoint (Public - Generates 7-Day Bearer Session Token) ────────────
+const LoginSchema = z.object({
+  code: z.string().length(6, "Code must be 6 digits"),
+});
+
+router.post("/login", (req: Request, res: Response) => {
+  try {
+    const { code } = LoginSchema.parse(req.body);
+    const config = db.select().from(adminConfig).all();
+    if (config.length === 0 || !config[0].totpSecret) {
+      return res.status(400).json({ error: "TOTP not configured on server." });
+    }
+    const valid = verifyTOTP(code, config[0].totpSecret);
+    if (!valid) {
+      return res.status(401).json({ error: "Invalid or expired Google Authenticator code." });
+    }
+
+    // Generate secure session token (valid for 7 days)
+    const token = crypto.randomBytes(32).toString("hex");
+    const now = Date.now();
+    const SEVEN_DAYS_MS = 60 * 60 * 1000;
+    const expiresAt = now + SEVEN_DAYS_MS;
+
+    db.insert(adminSessions)
+      .values({
+        token,
+        expiresAt,
+        createdAt: now,
+      })
+      .run();
+
+    return res.json({
+      success: true,
+      token,
+      expiresAt: new Date(expiresAt).toISOString(),
+      expiresInSeconds: Math.floor(SEVEN_DAYS_MS / 1000),
+      message: "Login successful. Include 'Authorization: Bearer <token>' in all requests.",
+    });
+  } catch (err) {
+    if (err instanceof z.ZodError) return res.status(400).json({ error: err.errors });
+    return res.status(500).json({ error: "Login failed." });
+  }
+});
+
+// Apply Auth (Bearer session token or direct TOTP) to ALL remaining admin routes
 router.use(totpAuth);
+
+// ─── Logout & Verify ──────────────────────────────────────────────────────────
+router.post("/logout", (req: Request, res: Response) => {
+  const authHeader = req.headers["authorization"];
+  if (authHeader && authHeader.startsWith("Bearer ")) {
+    const token = authHeader.slice(7).trim();
+    db.delete(adminSessions).where(eq(adminSessions.token, token)).run();
+  }
+  return res.json({ success: true, message: "Logged out successfully." });
+});
+
+router.get("/verify", (_req: Request, res: Response) => {
+  return res.json({ success: true, authenticated: true });
+});
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 

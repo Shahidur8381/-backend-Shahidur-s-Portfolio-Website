@@ -96,3 +96,12 @@ export const adminConfig = sqliteTable("admin_config", {
   totpSecret: text("totpSecret").notNull(),
   label: text("label").default("PortfolioAdmin"),
 });
+
+// ─── admin_sessions ───────────────────────────────────────────────────────────
+export const adminSessions = sqliteTable("admin_sessions", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  token: text("token").notNull().unique(),
+  expiresAt: integer("expiresAt").notNull(),
+  createdAt: integer("createdAt").notNull(),
+});
+
