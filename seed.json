@@ -1,0 +1,46 @@
+{
+  "personal": {
+    "name": "Shahidur Rahman",
+    "title": "3D Developer & Engineer",
+    "email": "hello@shahidur.dev",
+    "salam": "Assalamu Alaikum",
+    "salamMeaning": "(peace be upon you)",
+    "roles": ["An Engineer", "A Developer", "A Designer", "A Teacher", "A Tech Innovator"],
+    "aboutIntro": "I build reliable, scalable digital products from idea to production — combining modern full-stack development with backend engineering, AI/ML, and emerging Web3 technologies.",
+    "portrait": "/images/portrait.jpg"
+  },
+  "navLinks": [
+    { "navId": "about", "title": "About", "sortOrder": 0 },
+    { "navId": "education", "title": "Education", "sortOrder": 1 },
+    { "navId": "experience", "title": "Experience", "sortOrder": 2 },
+    { "navId": "projects", "title": "Projects", "sortOrder": 3 },
+    { "navId": "contact", "title": "Contact", "sortOrder": 4 }
+  ],
+  "what_i_built": [
+    { "number": "01", "title": "Full-Stack Development", "description": "Modern web applications, APIs, databases, authentication, real-time systems, and production-ready platforms built for real-world use.", "tech": "Next.js · React · Node.js · PostgreSQL", "iconType": "fullstack", "isPrimary": true, "showOnHomepage": true, "sortOrder": 0 },
+    { "number": "02", "title": "AI & Machine Learning", "description": "Building intelligent software with machine learning, AI APIs, data-driven systems, and practical automation.", "tech": "Python · Machine Learning · AI APIs · Data", "iconType": "ai", "isPrimary": false, "showOnHomepage": true, "sortOrder": 1 },
+    { "number": "03", "title": "Blockchain & Web3", "description": "Exploring decentralized applications and blockchain technologies to build new approaches to digital products.", "tech": "Blockchain · Web3 · Smart Contracts · dApps", "iconType": "blockchain", "isPrimary": false, "showOnHomepage": true, "sortOrder": 2 }
+  ],
+  "education": [
+    { "title": "Secondary School Certificate", "institution": "Kashira High School", "result": "GPA 5.00", "date": "Completed", "icon": "🏫", "description": "Built a strong foundation in science and mathematics, achieving top academic grades.", "expectedGraduationYear": null, "showOnHomepage": true, "sortOrder": 0 },
+    { "title": "Higher Secondary Certificate", "institution": "Rajshahi Government City College", "result": "GPA 5.00", "date": "Completed", "icon": "🏛️", "description": "Advanced studies in science, preparing for a rigorous engineering curriculum.", "expectedGraduationYear": null, "showOnHomepage": true, "sortOrder": 1 },
+    { "title": "B.Sc in Computer Science & Engineering", "institution": "Khulna University of Engineering & Technology", "result": "3rd Year", "date": "Present", "icon": "🎓", "description": "Pursuing higher education in engineering, focusing on scalable software architecture, AI, and Web3 technologies.", "expectedGraduationYear": 2027, "showOnHomepage": true, "sortOrder": 2 }
+  ],
+  "experiences": [
+    { "slug": "flyrant-ai", "title": "Backend AI Engineer Intern", "companyName": "FlyRant AI", "date": "Jul 2026 - Oct 2026", "icon": "🤖", "iconBg": "#050907", "points": ["Engineered backend systems to support highly scalable AI applications.", "Optimized API response times and integrated advanced machine learning models into production.", "Collaborated closely with cross-functional teams to deploy robust architecture."], "showOnHomepage": true, "sortOrder": 0 },
+    { "slug": "decodelab", "title": "Software Engineer Intern", "companyName": "Decodelab", "date": "Feb 2026 - Jun 2026", "icon": "💻", "iconBg": "#050907", "points": ["Developed and maintained critical features for core software products.", "Wrote clean, testable code and participated in agile development cycles.", "Identified and resolved complex bugs, improving overall system stability."], "showOnHomepage": true, "sortOrder": 1 },
+    { "slug": "scraft-studio", "title": "Full Stack Developer", "companyName": "Scraft Studio (Freelance)", "date": "Nov 2024 - Feb 2025", "icon": "🛠️", "iconBg": "#050907", "points": ["Led full-stack development for project-based client deliverables.", "Built responsive, dynamic front-end interfaces using React and modern CSS.", "Designed and implemented secure database schemas and backend logic."], "showOnHomepage": true, "sortOrder": 2 },
+    { "slug": "blockchain-fiverr", "title": "Blockchain Developer", "companyName": "Self-Employed (Fiverr)", "date": "2024 - Present", "icon": "⛓️", "iconBg": "#050907", "points": ["Developed secure smart contracts and decentralized applications (dApps).", "Audited Web3 protocols to ensure maximum security and efficiency.", "Successfully delivered multiple complex blockchain projects to international clients."], "showOnHomepage": true, "sortOrder": 3 },
+    { "slug": "freelancer-revenue", "title": "Independent Web3 & Full Stack Freelancer", "companyName": "Upwork / Fiverr / Direct", "date": "2024 - Present", "icon": "💰", "iconBg": "#050907", "points": ["Successfully delivered countless freelance projects focusing on Web3, Telegram bots, and premium websites.", "Generated over $6,000+ in revenue through consistently high-quality client deliverables.", "Managed entire product lifecycles from initial concept to deployment and handover."], "showOnHomepage": true, "sortOrder": 4 }
+  ],
+  "projects": [
+    { "slug": "car-rent", "name": "Car Rent", "description": "Web-based platform that allows users to search, book, and manage car rentals from various providers, providing a convenient and efficient solution for transportation needs.", "tags": [{"name":"react","color":"blue-text-gradient"},{"name":"mongodb","color":"green-text-gradient"},{"name":"tailwind","color":"pink-text-gradient"}], "image": "/assets/carrent.png", "sourceCodeLink": "https://github.com/", "liveDemoLink": null, "showOnHomepage": true, "sortOrder": 0 },
+    { "slug": "job-it", "name": "Job IT", "description": "Web application that enables users to search for job openings, view estimated salary ranges for positions, and locate available jobs based on their current location.", "tags": [{"name":"react","color":"blue-text-gradient"},{"name":"restapi","color":"green-text-gradient"},{"name":"scss","color":"pink-text-gradient"}], "image": "/assets/jobit.png", "sourceCodeLink": "https://github.com/", "liveDemoLink": null, "showOnHomepage": true, "sortOrder": 1 },
+    { "slug": "trip-guide", "name": "Trip Guide", "description": "A comprehensive travel booking platform that allows users to book flights, hotels, and rental cars, and offers curated recommendations for popular destinations.", "tags": [{"name":"nextjs","color":"blue-text-gradient"},{"name":"supabase","color":"green-text-gradient"},{"name":"css","color":"pink-text-gradient"}], "image": "/assets/tripguide.png", "sourceCodeLink": "https://github.com/", "liveDemoLink": null, "showOnHomepage": true, "sortOrder": 2 }
+  ],
+  "testimonials": [
+    { "testimonial": "I thought it was impossible to make a website as beautiful as our product, but Rick proved me wrong.", "name": "Sara Lee", "designation": "CFO", "company": "Acme Co", "image": "https://randomuser.me/api/portraits/women/4.jpg", "showOnHomepage": true, "sortOrder": 0 },
+    { "testimonial": "I've never met a web developer who truly cares about their clients' success like Rick does.", "name": "Chris Brown", "designation": "COO", "company": "DEF Corp", "image": "https://randomuser.me/api/portraits/men/5.jpg", "showOnHomepage": true, "sortOrder": 1 },
+    { "testimonial": "After Rick optimized our website, our traffic increased by 50%. We can't thank them enough!", "name": "Lisa Wang", "designation": "CTO", "company": "456 Enterprises", "image": "https://randomuser.me/api/portraits/women/6.jpg", "showOnHomepage": true, "sortOrder": 2 }
+  ]
+}

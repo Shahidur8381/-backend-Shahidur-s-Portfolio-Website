@@ -1,0 +1,30 @@
+services:
+  portfolio-api:
+    build: .
+    container_name: portfolio-api
+    restart: unless-stopped
+    ports:
+      - "4000:4000"
+    volumes:
+      - portfolio_data:/app/data
+    environment:
+      - NODE_ENV=production
+      - PORT=4000
+      - DATABASE_URL=/app/data/portfolio.db
+      - SETUP_KEY=${SETUP_KEY}
+      - CORS_ORIGIN=${CORS_ORIGIN}
+    networks:
+      - portfolio-net
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+volumes:
+  portfolio_data:
+    driver: local
+
+networks:
+  portfolio-net:
+    driver: bridge
