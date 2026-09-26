@@ -42,6 +42,7 @@ export const education = sqliteTable("education", {
   result: text("result"),
   date: text("date"),
   icon: text("icon"),
+  image: text("image"),
   description: text("description"),
   expectedGraduationYear: integer("expectedGraduationYear"),
   showOnHomepage: integer("showOnHomepage", { mode: "boolean" }).default(true),
@@ -56,6 +57,7 @@ export const experiences = sqliteTable("experiences", {
   companyName: text("companyName").notNull(),
   date: text("date"),
   icon: text("icon"),
+  image: text("image"),
   iconBg: text("iconBg"),
   points: text("points"), // JSON stringified array
   showOnHomepage: integer("showOnHomepage", { mode: "boolean" }).default(true),
