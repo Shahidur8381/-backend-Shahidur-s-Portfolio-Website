@@ -13,6 +13,9 @@ services:
       - DATABASE_URL=/app/data/portfolio.db
       - SETUP_KEY=${SETUP_KEY}
       - CORS_ORIGIN=${CORS_ORIGIN}
+      - TOTP_SHARED_SECRET=${TOTP_SHARED_SECRET}
+    env_file:
+      - .env
     networks:
       - portfolio-net
     logging:
