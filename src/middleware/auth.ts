@@ -46,15 +46,15 @@ export function totpAuth(req: Request, res: Response, next: NextFunction): void 
       return;
     }
 
-    const config = db.select().from(adminConfig).all();
-    if (config.length === 0 || !config[0].totpSecret) {
+    const secret = process.env.TOTP_SHARED_SECRET;
+    if (!secret) {
       res.status(401).json({
-        error: "TOTP not configured. Please call POST /api/setup/totp first.",
+        error: "TOTP not configured in environment.",
       });
       return;
     }
 
-    const valid = verifyTOTP(code, config[0].totpSecret);
+    const valid = verifyTOTP(code, secret);
     if (!valid) {
       res.status(401).json({ error: "Invalid or expired TOTP code." });
       return;

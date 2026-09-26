@@ -42,15 +42,11 @@ export function verifyTOTP(code: string, secretBase32: string): boolean {
 }
 
 export function getStoredSecret(): string | null {
-  const config = db.select().from(adminConfig).all();
-  if (config.length === 0) return null;
-  return config[0].totpSecret;
+  return process.env.TOTP_SHARED_SECRET || null;
 }
 
 export function storeTOTPSecret(secret: string, label: string): void {
-  db.insert(adminConfig)
-    .values({ id: 1, totpSecret: secret, label })
-    .run();
+  console.warn("TOTP secret is now managed via TOTP_SHARED_SECRET environment variable. Database storage is disabled.");
 }
 
 export function hasTOTPSecret(): boolean {

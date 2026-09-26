@@ -27,11 +27,11 @@ const LoginSchema = z.object({
 router.post("/login", (req: Request, res: Response) => {
   try {
     const { code } = LoginSchema.parse(req.body);
-    const config = db.select().from(adminConfig).all();
-    if (config.length === 0 || !config[0].totpSecret) {
+    const secret = process.env.TOTP_SHARED_SECRET;
+    if (!secret) {
       return res.status(400).json({ error: "TOTP not configured on server." });
     }
-    const valid = verifyTOTP(code, config[0].totpSecret);
+    const valid = verifyTOTP(code, secret);
     if (!valid) {
       return res.status(401).json({ error: "Invalid or expired Google Authenticator code." });
     }
@@ -184,14 +184,10 @@ router.post("/upload", (req: Request, res: Response) => {
     const filePath = path.join(UPLOADS_DIR, cleanFilename);
     fs.writeFileSync(filePath, buffer);
 
-    const host = req.get("host") || "api.shahidur.dev";
-    const protocol = req.protocol === "https" || req.headers["x-forwarded-proto"] === "https" ? "https" : "http";
-    const url = `${protocol}://${host}/uploads/${cleanFilename}`;
-
-    return res.status(201).json({
-      url,
-      relativeUrl: `/uploads/${cleanFilename}`,
-      filename: cleanFilename,
+    return res.status(200).json({
+      url: `/uploads/${cleanFilename}`,
+      success: true,
+      message: "Image uploaded successfully"
     });
   } catch (err) {
     if (err instanceof z.ZodError) return res.status(400).json({ error: err.errors });

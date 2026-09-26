@@ -6,7 +6,7 @@ import path from "path";
 import db, { sqlite } from "./db/connection";
 import { runSeed } from "./db/seed";
 import { adminConfig } from "./db/schema";
-import { generateTOTPSecret, storeTOTPSecret } from "./utils/totp";
+import { generateTOTPSecret, hasTOTPSecret } from "./utils/totp";
 import publicRoutes from "./routes/public";
 import adminRoutes from "./routes/admin";
 
@@ -77,19 +77,16 @@ app.post("/api/setup/totp", (req, res) => {
     return res.status(403).json({ error: "Invalid or missing X-Setup-Key header." });
   }
 
-  // Check if already set up
-  const existing = db.select().from(adminConfig).all();
-  if (existing.length > 0) {
+  if (hasTOTPSecret()) {
     return res.status(403).json({
-      error: "TOTP already configured. Reset the admin_config table to re-setup.",
+      error: "TOTP is already configured via TOTP_SHARED_SECRET environment variable.",
     });
   }
 
   const label = "PortfolioAdmin";
   const { secret, uri } = generateTOTPSecret(label);
-  storeTOTPSecret(secret, label);
 
-  log("✅ TOTP secret generated and stored.");
+  log("✅ TOTP secret generated for manual setup.");
 
   return res.status(201).json({
     message: "TOTP configured successfully. Scan the QR URI with Google Authenticator.",
