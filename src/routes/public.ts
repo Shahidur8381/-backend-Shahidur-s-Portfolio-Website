@@ -1,5 +1,6 @@
 import { Router, Request, Response } from "express";
 import { eq, asc } from "drizzle-orm";
+import { z } from "zod";
 import db from "../db/connection";
 import {
   personal,
@@ -116,6 +117,20 @@ router.get("/experiences", (req: Request, res: Response) => {
   }
 });
 
+// ─── Project Schema & Endpoints ───────────────────────────────────────────────
+const ProjectSchema = z.object({
+  slug: z.string(),
+  name: z.string(),
+  category: z.string().optional().nullable(),
+  description: z.string().optional().nullable(),
+  tags: z.array(z.object({ name: z.string(), color: z.string() })).optional(),
+  image: z.string().optional().nullable(),
+  sourceCodeLink: z.string().optional().nullable(),
+  liveDemoLink: z.string().nullable().optional(),
+  showOnHomepage: z.boolean().optional(),
+  sortOrder: z.number().optional(),
+});
+
 // ─── GET /api/projects ────────────────────────────────────────────────────────
 router.get("/projects", (req: Request, res: Response) => {
   try {
@@ -128,10 +143,66 @@ router.get("/projects", (req: Request, res: Response) => {
           .all()
       : db.select().from(projects).orderBy(asc(projects.sortOrder)).all();
     return res.json(
-      rows.map((r) => ({ ...r, tags: parseJSON<unknown[]>(r.tags, []) }))
+      rows.map((r) => ({
+        id: r.id,
+        slug: r.slug,
+        name: r.name,
+        category: r.category || "Full-Stack",
+        description: r.description,
+        image: r.image,
+        tags: parseJSON<unknown[]>(r.tags, []),
+        sourceCodeLink: r.sourceCodeLink,
+        liveDemoLink: r.liveDemoLink,
+        showOnHomepage: r.showOnHomepage,
+        sortOrder: r.sortOrder,
+      }))
     );
   } catch {
     return res.status(500).json({ error: "Failed to fetch projects" });
+  }
+});
+
+router.post("/projects", (req: Request, res: Response) => {
+  try {
+    const parsed = ProjectSchema.parse(req.body);
+    const category =
+      parsed.category && parsed.category.trim() !== ""
+        ? parsed.category.trim()
+        : "Full-Stack";
+
+    const result = db
+      .insert(projects)
+      .values({
+        ...parsed,
+        category,
+        tags: parsed.tags ? JSON.stringify(parsed.tags) : undefined,
+        liveDemoLink: parsed.liveDemoLink ?? undefined,
+      })
+      .run();
+    return res.status(201).json({ id: Number(result.lastInsertRowid), ...parsed, category });
+  } catch (err) {
+    if (err instanceof z.ZodError) return res.status(400).json({ error: err.errors });
+    return res.status(500).json({ error: "Failed to create project" });
+  }
+});
+
+router.put("/projects/:id", (req: Request, res: Response) => {
+  try {
+    const id = parseInt(req.params.id);
+    const parsed = ProjectSchema.partial().parse(req.body);
+    const updateData: Record<string, unknown> = { ...parsed };
+    if (parsed.tags !== undefined) updateData.tags = JSON.stringify(parsed.tags);
+    if (req.body.category !== undefined) {
+      updateData.category =
+        typeof req.body.category === "string" && req.body.category.trim() !== ""
+          ? req.body.category.trim()
+          : "Full-Stack";
+    }
+    db.update(projects).set(updateData).where(eq(projects.id, id)).run();
+    return res.json({ message: "Updated successfully" });
+  } catch (err) {
+    if (err instanceof z.ZodError) return res.status(400).json({ error: err.errors });
+    return res.status(500).json({ error: "Failed to update project" });
   }
 });
 
@@ -181,7 +252,19 @@ router.get("/portfolio", (_req: Request, res: Response) => {
       .from(projects)
       .orderBy(asc(projects.sortOrder))
       .all()
-      .map((r) => ({ ...r, tags: parseJSON<unknown[]>(r.tags, []) }));
+      .map((r) => ({
+        id: r.id,
+        slug: r.slug,
+        name: r.name,
+        category: r.category || "Full-Stack",
+        description: r.description,
+        image: r.image,
+        tags: parseJSON<unknown[]>(r.tags, []),
+        sourceCodeLink: r.sourceCodeLink,
+        liveDemoLink: r.liveDemoLink,
+        showOnHomepage: r.showOnHomepage,
+        sortOrder: r.sortOrder,
+      }));
 
     const testimonialsData = db
       .select()

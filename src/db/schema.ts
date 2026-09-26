@@ -69,6 +69,7 @@ export const projects = sqliteTable("projects", {
   id: integer("id").primaryKey({ autoIncrement: true }),
   slug: text("slug").notNull().unique(),
   name: text("name").notNull(),
+  category: text("category").default("Full-Stack"),
   description: text("description"),
   tags: text("tags"), // JSON stringified array of {name, color}
   image: text("image"),

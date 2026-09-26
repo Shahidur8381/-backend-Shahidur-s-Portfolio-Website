@@ -127,6 +127,20 @@ async function bootstrap() {
       log(`⚠️  Migrations skipped or already applied: ${(err as Error).message}`);
     }
 
+    // Safe migration for category column
+    try {
+      (db as any).prepare("ALTER TABLE projects ADD COLUMN category TEXT DEFAULT 'Full-Stack'").run();
+      console.log("Added category column to projects table");
+    } catch (e) {
+      // Column already exists, safe to ignore
+    }
+
+    try {
+      (db as any).prepare("UPDATE projects SET category = 'Full-Stack' WHERE category IS NULL OR category = ''").run();
+    } catch (e) {
+      // Safe to ignore
+    }
+
     // Step 2: Seed the database
     await runSeed();
 

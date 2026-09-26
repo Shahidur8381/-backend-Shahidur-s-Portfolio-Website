@@ -122,6 +122,7 @@ const TABLE_MAP: Record<string, typeof personal | typeof navLinks | typeof whatI
 
 import fs from "fs";
 import path from "path";
+import { Buffer } from "buffer";
 import { UPLOADS_DIR } from "../utils/upload";
 
 // ─── Personal ─────────────────────────────────────────────────────────────────
@@ -386,10 +387,11 @@ router.delete("/experiences/:id", (req: Request, res: Response) => {
 const ProjectSchema = z.object({
   slug: z.string(),
   name: z.string(),
-  description: z.string().optional(),
+  category: z.string().optional().nullable(),
+  description: z.string().optional().nullable(),
   tags: z.array(z.object({ name: z.string(), color: z.string() })).optional(),
-  image: z.string().optional(),
-  sourceCodeLink: z.string().optional(),
+  image: z.string().optional().nullable(),
+  sourceCodeLink: z.string().optional().nullable(),
   liveDemoLink: z.string().nullable().optional(),
   showOnHomepage: z.boolean().optional(),
   sortOrder: z.number().optional(),
@@ -398,15 +400,21 @@ const ProjectSchema = z.object({
 router.post("/projects", (req: Request, res: Response) => {
   try {
     const parsed = ProjectSchema.parse(req.body);
+    const category =
+      parsed.category && parsed.category.trim() !== ""
+        ? parsed.category.trim()
+        : "Full-Stack";
+
     const result = db
       .insert(projects)
       .values({
         ...parsed,
+        category,
         tags: parsed.tags ? JSON.stringify(parsed.tags) : undefined,
         liveDemoLink: parsed.liveDemoLink ?? undefined,
       })
       .run();
-    return res.status(201).json({ id: result.lastInsertRowid, ...parsed });
+    return res.status(201).json({ id: result.lastInsertRowid, ...parsed, category });
   } catch (err) {
     if (err instanceof z.ZodError) return res.status(400).json({ error: err.errors });
     return res.status(500).json({ error: "Failed to create project" });
@@ -418,7 +426,13 @@ router.put("/projects/:id", (req: Request, res: Response) => {
     const id = parseInt(req.params.id);
     const parsed = ProjectSchema.partial().parse(req.body);
     const updateData: Record<string, unknown> = { ...parsed };
-    if (parsed.tags) updateData.tags = JSON.stringify(parsed.tags);
+    if (parsed.tags !== undefined) updateData.tags = JSON.stringify(parsed.tags);
+    if (req.body.category !== undefined) {
+      updateData.category =
+        typeof req.body.category === "string" && req.body.category.trim() !== ""
+          ? req.body.category.trim()
+          : "Full-Stack";
+    }
     db.update(projects).set(updateData).where(eq(projects.id, id)).run();
     return res.json({ message: "Updated successfully" });
   } catch (err) {

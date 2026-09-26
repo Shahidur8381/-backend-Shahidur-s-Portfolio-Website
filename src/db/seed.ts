@@ -128,6 +128,7 @@ export async function runSeed() {
         .values({
           slug: item.slug,
           name: item.name,
+          category: (item as any).category || "Full-Stack",
           description: item.description,
           tags: JSON.stringify(item.tags),
           image: item.image,
