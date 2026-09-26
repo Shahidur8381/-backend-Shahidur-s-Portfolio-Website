@@ -36,11 +36,11 @@ router.post("/login", (req: Request, res: Response) => {
       return res.status(401).json({ error: "Invalid or expired Google Authenticator code." });
     }
 
-    // Generate secure session token (valid for 7 days)
+    // Generate secure session token (valid for 60 minutes)
     const token = crypto.randomBytes(32).toString("hex");
     const now = Date.now();
-    const SEVEN_DAYS_MS = 60 * 60 * 1000;
-    const expiresAt = now + SEVEN_DAYS_MS;
+    const SESSION_DURATION_MS = 60 * 60 * 1000; // 60 minutes
+    const expiresAt = now + SESSION_DURATION_MS;
 
     db.insert(adminSessions)
       .values({
@@ -54,7 +54,7 @@ router.post("/login", (req: Request, res: Response) => {
       success: true,
       token,
       expiresAt: new Date(expiresAt).toISOString(),
-      expiresInSeconds: Math.floor(SEVEN_DAYS_MS / 1000),
+      expiresInSeconds: Math.floor(SESSION_DURATION_MS / 1000),
       message: "Login successful. Include 'Authorization: Bearer <token>' in all requests.",
     });
   } catch (err) {
@@ -66,17 +66,36 @@ router.post("/login", (req: Request, res: Response) => {
 // Apply Auth (Bearer session token or direct TOTP) to ALL remaining admin routes
 router.use(totpAuth);
 
-// ─── Logout & Verify ──────────────────────────────────────────────────────────
-router.post("/logout", (req: Request, res: Response) => {
+// ─── Destroy Session / Logout & Verify ────────────────────────────────────────
+router.post(["/logout", "/destroy-session"], (req: Request, res: Response) => {
   const authHeader = req.headers["authorization"];
   if (authHeader && authHeader.startsWith("Bearer ")) {
     const token = authHeader.slice(7).trim();
     db.delete(adminSessions).where(eq(adminSessions.token, token)).run();
   }
-  return res.json({ success: true, message: "Logged out successfully." });
+  return res.json({ success: true, message: "Session destroyed. Access revoked." });
 });
 
-router.get("/verify", (_req: Request, res: Response) => {
+router.post("/destroy-all-sessions", (_req: Request, res: Response) => {
+  db.delete(adminSessions).run();
+  return res.json({ success: true, message: "All active sessions destroyed." });
+});
+
+router.get("/verify", (req: Request, res: Response) => {
+  const authHeader = req.headers["authorization"];
+  if (authHeader && authHeader.startsWith("Bearer ")) {
+    const token = authHeader.slice(7).trim();
+    const rows = db.select().from(adminSessions).where(eq(adminSessions.token, token)).all();
+    if (rows.length > 0) {
+      const remainingMs = Math.max(0, rows[0].expiresAt - Date.now());
+      return res.json({
+        success: true,
+        authenticated: true,
+        expiresAt: new Date(rows[0].expiresAt).toISOString(),
+        remainingSeconds: Math.floor(remainingMs / 1000),
+      });
+    }
+  }
   return res.json({ success: true, authenticated: true });
 });
 
