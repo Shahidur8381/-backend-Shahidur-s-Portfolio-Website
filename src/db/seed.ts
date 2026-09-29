@@ -7,6 +7,7 @@ import {
   experiences,
   projects,
   testimonials,
+  socialLinks,
 } from "./schema";
 import seedData from "../../seed.json";
 
@@ -32,6 +33,7 @@ export async function runSeed() {
         roles: JSON.stringify(p.roles),
         aboutIntro: p.aboutIntro,
         portrait: p.portrait,
+        resumeUrl: (p as any).resumeUrl ?? null,
       })
       .run();
     log("✅ Seeded: personal");
@@ -163,6 +165,32 @@ export async function runSeed() {
     log("✅ Seeded: testimonials");
   } else {
     log("⏭️  Skipped: testimonials (already has data)");
+  }
+
+  // ── socialLinks ──────────────────────────────────────────────────────────────
+  const existingSocialLinks = db.select().from(socialLinks).all();
+  if (existingSocialLinks.length === 0) {
+    const now = new Date().toISOString();
+    const links = (seedData as any).socialLinks || [];
+    for (const item of links) {
+      db.insert(socialLinks)
+        .values({
+          platform: item.platform,
+          label: item.label,
+          url: item.url,
+          icon: item.icon,
+          displayInContact: item.displayInContact ?? false,
+          displayInFooter: item.displayInFooter ?? true,
+          sortOrder: item.sortOrder ?? 0,
+          isActive: item.isActive ?? true,
+          createdAt: now,
+          updatedAt: now,
+        })
+        .run();
+    }
+    log("✅ Seeded: social_links");
+  } else {
+    log("⏭️  Skipped: social_links (already has data)");
   }
 
   log("Seed complete.");

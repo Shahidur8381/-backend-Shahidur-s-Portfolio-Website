@@ -14,6 +14,7 @@ services:
       - SETUP_KEY=${SETUP_KEY}
       - CORS_ORIGIN=${CORS_ORIGIN}
       - TOTP_SHARED_SECRET=${TOTP_SHARED_SECRET}
+      - PUBLIC_BASE_URL=${PUBLIC_BASE_URL:-https://api.shahidur.dev}
     env_file:
       - .env
     networks:

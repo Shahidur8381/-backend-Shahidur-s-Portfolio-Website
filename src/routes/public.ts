@@ -10,6 +10,7 @@ import {
   experiences,
   projects,
   testimonials,
+  socialLinks,
 } from "../db/schema";
 
 const router = Router();
@@ -46,6 +47,7 @@ router.get("/personal", (_req: Request, res: Response) => {
     const row = rows[0];
     return res.json({
       ...row,
+      resumeUrl: row.resumeUrl ?? null,
       roles: parseJSON<string[]>(row.roles, []),
     });
   } catch (err) {
@@ -60,6 +62,30 @@ router.get("/nav-links", (_req: Request, res: Response) => {
     return res.json(rows);
   } catch {
     return res.status(500).json({ error: "Failed to fetch nav links" });
+  }
+});
+
+// ─── GET /api/social-links ────────────────────────────────────────────────────
+router.get("/social-links", (_req: Request, res: Response) => {
+  try {
+    const rows = db
+      .select({
+        id: socialLinks.id,
+        platform: socialLinks.platform,
+        label: socialLinks.label,
+        url: socialLinks.url,
+        icon: socialLinks.icon,
+        displayInContact: socialLinks.displayInContact,
+        displayInFooter: socialLinks.displayInFooter,
+        sortOrder: socialLinks.sortOrder,
+      })
+      .from(socialLinks)
+      .where(eq(socialLinks.isActive, true))
+      .orderBy(asc(socialLinks.sortOrder), asc(socialLinks.id))
+      .all();
+    return res.json({ socialLinks: rows });
+  } catch {
+    return res.status(500).json({ error: "Failed to fetch social links" });
   }
 });
 
@@ -230,6 +256,7 @@ router.get("/portfolio", (_req: Request, res: Response) => {
     const personalData = personalRows[0]
       ? {
           ...personalRows[0],
+          resumeUrl: personalRows[0].resumeUrl ?? null,
           roles: parseJSON<string[]>(personalRows[0].roles, []),
         }
       : null;
@@ -272,9 +299,26 @@ router.get("/portfolio", (_req: Request, res: Response) => {
       .orderBy(asc(testimonials.sortOrder))
       .all();
 
+    const socialLinksData = db
+      .select({
+        id: socialLinks.id,
+        platform: socialLinks.platform,
+        label: socialLinks.label,
+        url: socialLinks.url,
+        icon: socialLinks.icon,
+        displayInContact: socialLinks.displayInContact,
+        displayInFooter: socialLinks.displayInFooter,
+        sortOrder: socialLinks.sortOrder,
+      })
+      .from(socialLinks)
+      .where(eq(socialLinks.isActive, true))
+      .orderBy(asc(socialLinks.sortOrder), asc(socialLinks.id))
+      .all();
+
     return res.json({
       personal: personalData,
       navLinks: navLinksData,
+      socialLinks: socialLinksData,
       whatIBuilt: capabilitiesData,
       education: educationData,
       experiences: experiencesData,

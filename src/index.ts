@@ -16,6 +16,7 @@ function log(msg: string) {
 }
 
 const app = express();
+app.set("trust proxy", 1);
 const PORT = parseInt(process.env.PORT || "4000", 10);
 
 // ─── CORS ─────────────────────────────────────────────────────────────────────
@@ -45,6 +46,7 @@ import { UPLOADS_DIR } from "./utils/upload";
 // ─── Body parsing ─────────────────────────────────────────────────────────────
 app.use(express.json({ limit: "15mb" }));
 app.use(express.urlencoded({ extended: true, limit: "15mb" }));
+app.use(express.raw({ type: "application/pdf", limit: "15mb" }));
 
 // ─── Static files (uploaded images) ───────────────────────────────────────────
 app.use("/uploads", express.static(UPLOADS_DIR));
@@ -58,7 +60,7 @@ app.use((req, _res, next) => {
 // ─── Rate limiting (admin routes only) ───────────────────────────────────────
 const adminLimiter = rateLimit({
   windowMs: 60 * 1000, // 1 minute
-  max: 10,
+  max: parseInt(process.env.ADMIN_RATE_LIMIT || "100", 10),
   message: { error: "Too many requests, please try again later." },
   standardHeaders: true,
   legacyHeaders: false,
@@ -139,6 +141,40 @@ async function bootstrap() {
       (db as any).prepare("UPDATE projects SET category = 'Full-Stack' WHERE category IS NULL OR category = ''").run();
     } catch (e) {
       // Safe to ignore
+    }
+
+    // Safe migration for resumeUrl column in personal table
+    try {
+      const personalInfo = (db as any).prepare("PRAGMA table_info(personal)").all() as Array<{ name: string }>;
+      const hasResumeUrl = personalInfo.some((col) => col.name === "resumeUrl");
+      if (!hasResumeUrl) {
+        (db as any).prepare("ALTER TABLE personal ADD COLUMN resumeUrl TEXT").run();
+        log("✅ Added resumeUrl column to personal table");
+      }
+    } catch (e) {
+      log(`⚠️  resumeUrl column check/migration: ${(e as Error).message}`);
+    }
+
+    // Safe migration for social_links table
+    try {
+      (db as any).prepare(`
+        CREATE TABLE IF NOT EXISTS social_links (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          platform TEXT NOT NULL,
+          label TEXT,
+          url TEXT NOT NULL,
+          icon TEXT,
+          displayInContact INTEGER NOT NULL DEFAULT 0,
+          displayInFooter INTEGER NOT NULL DEFAULT 1,
+          sortOrder INTEGER NOT NULL DEFAULT 0,
+          isActive INTEGER NOT NULL DEFAULT 1,
+          createdAt TEXT,
+          updatedAt TEXT
+        )
+      `).run();
+      log("✅ Verified / created social_links table");
+    } catch (e) {
+      log(`⚠️  social_links table migration: ${(e as Error).message}`);
     }
 
     // Step 2: Seed the database

@@ -11,6 +11,7 @@ export const personal = sqliteTable("personal", {
   roles: text("roles"), // JSON stringified array
   aboutIntro: text("aboutIntro"),
   portrait: text("portrait"),
+  resumeUrl: text("resumeUrl"),
 });
 
 // ─── nav_links ────────────────────────────────────────────────────────────────
@@ -105,4 +106,20 @@ export const adminSessions = sqliteTable("admin_sessions", {
   expiresAt: integer("expiresAt").notNull(),
   createdAt: integer("createdAt").notNull(),
 });
+
+// ─── social_links ─────────────────────────────────────────────────────────────
+export const socialLinks = sqliteTable("social_links", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  platform: text("platform").notNull(),
+  label: text("label"),
+  url: text("url").notNull(),
+  icon: text("icon"),
+  displayInContact: integer("displayInContact", { mode: "boolean" }).default(false),
+  displayInFooter: integer("displayInFooter", { mode: "boolean" }).default(true),
+  sortOrder: integer("sortOrder").default(0),
+  isActive: integer("isActive", { mode: "boolean" }).default(true),
+  createdAt: text("createdAt"),
+  updatedAt: text("updatedAt"),
+});
+
 
