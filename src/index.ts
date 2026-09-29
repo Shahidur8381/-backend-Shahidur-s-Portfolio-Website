@@ -22,21 +22,30 @@ const PORT = parseInt(process.env.PORT || "4000", 10);
 // ─── CORS ─────────────────────────────────────────────────────────────────────
 const allowedOrigins = (process.env.CORS_ORIGIN || "http://localhost:3000")
   .split(",")
-  .map((o) => o.trim());
+  .map((o) => o.trim())
+  .filter(Boolean);
 
 app.use(
   cors({
     origin: (origin, callback) => {
-      // Allow requests with no origin (e.g., mobile apps, curl)
+      // Allow requests with no origin (e.g., mobile apps, curl, server-to-server)
       if (!origin) return callback(null, true);
-      if (allowedOrigins.includes(origin) || allowedOrigins.includes("*")) {
+      const isAllowed =
+        allowedOrigins.includes(origin) ||
+        allowedOrigins.includes("*") ||
+        /^https?:\/\/([a-zA-Z0-9-]+\.)*shahidur\.dev(:\d+)?$/.test(origin) ||
+        /^https?:\/\/([a-zA-Z0-9-]+\.)*vercel\.app(:\d+)?$/.test(origin) ||
+        /^https?:\/\/localhost(:\d+)?$/.test(origin);
+
+      if (isAllowed) {
         callback(null, true);
       } else {
+        log(`Blocked by CORS: ${origin}`);
         callback(new Error(`CORS policy: ${origin} not allowed`));
       }
     },
-    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-    allowedHeaders: ["Content-Type", "Authorization", "X-Setup-Key"],
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
+    allowedHeaders: ["Content-Type", "Authorization", "X-Setup-Key", "X-Filename", "Accept", "Origin", "X-Requested-With"],
     credentials: true,
   })
 );
@@ -49,7 +58,7 @@ app.use(express.urlencoded({ extended: true, limit: "15mb" }));
 app.use(express.raw({ type: "application/pdf", limit: "15mb" }));
 
 // ─── Static files (uploaded images) ───────────────────────────────────────────
-app.use("/uploads", express.static(UPLOADS_DIR));
+app.use(["/uploads", "/api/uploads"], express.static(UPLOADS_DIR));
 
 // ─── Request logging ──────────────────────────────────────────────────────────
 app.use((req, _res, next) => {
@@ -67,11 +76,24 @@ const adminLimiter = rateLimit({
 });
 
 // ─── Routes ───────────────────────────────────────────────────────────────────
-app.use("/api", publicRoutes);
+// Support both /api/admin and /admin prefixes
 app.use("/api/admin", adminLimiter, adminRoutes);
+app.use("/admin", adminLimiter, adminRoutes);
+
+// Support both /api and root / routes
+app.use("/api", publicRoutes);
+app.use("/", publicRoutes);
+
+// Direct shortcuts for auth if called without prefix
+app.post(["/login", "/api/login"], (req, res, next) => {
+  adminRoutes(req, res, next);
+});
+app.get(["/verify", "/api/verify"], (req, res, next) => {
+  adminRoutes(req, res, next);
+});
 
 // ─── TOTP Setup Endpoint ──────────────────────────────────────────────────────
-app.post("/api/setup/totp", (req, res) => {
+app.post(["/api/setup/totp", "/setup/totp"], (req, res) => {
   const setupKey = req.headers["x-setup-key"];
   const envKey = process.env.SETUP_KEY;
 

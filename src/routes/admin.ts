@@ -21,13 +21,26 @@ import { verifyTOTP } from "../utils/totp";
 const router = Router();
 
 // ─── Login Endpoint (Public - Generates 7-Day Bearer Session Token) ────────────
-const LoginSchema = z.object({
-  code: z.string().length(6, "Code must be 6 digits"),
-});
+const cleanCode = (val: unknown) => {
+  if (val === undefined || val === null) return undefined;
+  const s = String(val).trim();
+  return s.length > 0 ? s : undefined;
+};
+
+const LoginSchema = z
+  .object({
+    code: z.preprocess(cleanCode, z.string().length(6, "Code must be 6 digits")).optional(),
+    totp: z.preprocess(cleanCode, z.string().length(6, "Code must be 6 digits")).optional(),
+    token: z.preprocess(cleanCode, z.string().length(6, "Code must be 6 digits")).optional(),
+  })
+  .refine((data: { code?: string; totp?: string; token?: string }) => Boolean(data.code || data.totp || data.token), {
+    message: "Code must be 6 digits",
+  });
 
 router.post("/login", (req: Request, res: Response) => {
   try {
-    const { code } = LoginSchema.parse(req.body);
+    const parsed = LoginSchema.parse(req.body);
+    const code = (parsed.code || parsed.totp || parsed.token)!;
     const secret = process.env.TOTP_SHARED_SECRET;
     if (!secret) {
       return res.status(400).json({ error: "TOTP not configured on server." });
@@ -54,12 +67,16 @@ router.post("/login", (req: Request, res: Response) => {
     return res.json({
       success: true,
       token,
+      accessToken: token,
+      data: { token, accessToken: token },
       expiresAt: new Date(expiresAt).toISOString(),
       expiresInSeconds: Math.floor(SESSION_DURATION_MS / 1000),
       message: "Login successful. Include 'Authorization: Bearer <token>' in all requests.",
     });
   } catch (err) {
-    if (err instanceof z.ZodError) return res.status(400).json({ error: err.errors });
+    if (err instanceof z.ZodError) {
+      return res.status(400).json({ error: err.errors[0]?.message || "Code must be 6 digits" });
+    }
     return res.status(500).json({ error: "Login failed." });
   }
 });
